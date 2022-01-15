@@ -63,34 +63,31 @@ public class ProceduralAudio : MonoBehaviour
 
         //Update the values of the siren noise.
         sirenApproachOffset += sirenApproachSpeed * 0.001f;
-        if (sirenSpeedUp) sirenIncrement *= sirenSpeedRatio;
-        sirenPhase += sirenIncrement;
         if (sirenSpeedUp && (modifiedSpeed * sirenPhase > Mathf.PI * 1.5f || (modifiedSpeed * sirenPhase > Mathf.PI * 0.5 && modifiedSpeed * sirenPhase < Mathf.PI))) {
             sirenSpeedUp = false;
         }
         else sirenSpeedUp = true;
-        if (modifiedSpeed * sirenPhase > 2 * Mathf.PI) {
-            sirenPhase = 0;
-        }
+        if (sirenSpeedUp) sirenIncrement *= sirenSpeedRatio;
+        sirenPhase += sirenIncrement;
+        if (modifiedSpeed * sirenPhase > 2 * Mathf.PI) sirenPhase -= 2 * Mathf.PI / modifiedSpeed;
         float modFrequency = frequency + (sirenApproachOffset * 100) + sirenRange * (float)Mathf.Sin(modifiedSpeed * sirenPhase);
         //increment = frequency * 2f * Mathf.PI / sampling_frequency; //Pure sine
         increment = modFrequency * 2f * Mathf.PI / sampling_frequency; //Siren
 
-        for (int i = 0; i < data.Length; i++)
-        {
-
-            //noise
+        for (int i = 0; i < data.Length; i++) {
+            //Noise part
             float noisePart = noiseRatio * (float)(rand.NextDouble() * 2.0 - 1.0 + offset);
-            phase += increment;
-            if (phase > 2 * Mathf.PI) phase = 0;
 
-            //tone
+            //Tonal part
+            phase += increment;
+            if (phase > 2 * Mathf.PI) phase -= 2 * Mathf.PI;
             //tonalPart = (1f - noiseRatio) * (float)(gain * Mathf.Sign(Mathf.Sin(phase))); //Square
             float tonalPart = (1f - noiseRatio) * (float)Mathf.Sin(phase); //Sine
+
             //together
             data[i] = System.Convert.ToInt32(!isMute) * gain * (noisePart + tonalPart);
 
-            // if we have stereo, we copy the mono data to each channel
+            //If the system has stereo, copy the mono data to each channel
             if (channels == 2)
             {
                 data[i + 1] = data[i];
